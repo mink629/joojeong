@@ -17,6 +17,8 @@ const INPUT =
   "w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900";
 const BTN_PRIMARY =
   "w-full py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-700 transition-colors";
+const BTN_SECONDARY =
+  "w-full py-3 bg-white text-gray-900 border border-gray-300 rounded-xl font-medium hover:bg-gray-50 transition-colors";
 
 function Header({
   title,
@@ -47,7 +49,8 @@ function Header({
 
 export default function NewPage() {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>("upload");
   const [currentFile, setCurrentFile] = useState<File | null>(null);
@@ -150,22 +153,40 @@ export default function NewPage() {
             자동으로 인식해 드릴게요.
           </p>
           <input
-            ref={fileInputRef}
+            ref={cameraInputRef}
             type="file"
             accept="image/*"
             capture="environment"
             onChange={handleFileChange}
             className="hidden"
           />
-          <button
-            onClick={() => {
-              trackEvent("사진 촬영/업로드 클릭");
-              fileInputRef.current?.click();
-            }}
-            className={`${BTN_PRIMARY} max-w-xs`}
-          >
-            📷 사진 촬영 / 업로드
-          </button>
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <div className="flex flex-col gap-2 w-full max-w-xs">
+            <button
+              onClick={() => {
+                trackEvent("사진 촬영 클릭");
+                cameraInputRef.current?.click();
+              }}
+              className={BTN_PRIMARY}
+            >
+              📷 사진 촬영
+            </button>
+            <button
+              onClick={() => {
+                trackEvent("사진 업로드 클릭");
+                galleryInputRef.current?.click();
+              }}
+              className={BTN_SECONDARY}
+            >
+              🖼️ 앨범에서 업로드
+            </button>
+          </div>
         </main>
       </div>
     );
