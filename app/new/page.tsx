@@ -6,6 +6,7 @@ import Link from "next/link";
 import { recognizeLabel } from "@/lib/dummy-ai";
 import { saveRecord } from "@/lib/storage";
 import { trackEvent } from "@/lib/analytics";
+import { resizeImageToDataUrl } from "@/lib/image";
 import { TASTING_TAGS } from "@/lib/tasting";
 import type { AIResult } from "@/lib/types";
 import { StarInput } from "@/components/star";
@@ -86,13 +87,16 @@ export default function NewPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setCurrentFile(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setPhotoDataUrl(ev.target?.result as string);
-      setNukkiDone(false);
-      setStep("nukki");
-    };
-    reader.readAsDataURL(file);
+    resizeImageToDataUrl(file)
+      .then((dataUrl) => {
+        setPhotoDataUrl(dataUrl);
+        setNukkiDone(false);
+        setStep("nukki");
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("사진을 불러오지 못했어요. 다른 사진으로 시도해주세요.");
+      });
   };
 
   const handleNukkiNext = async () => {
@@ -127,18 +131,24 @@ export default function NewPage() {
     if (!name.trim() || saving) return;
     setSaving(true);
     trackEvent("기록 저장 클릭", { rating, hasPhoto: !!photoDataUrl });
-    saveRecord({
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      brand: brand.trim(),
-      type: type.trim(),
-      photoDataUrl,
-      rating,
-      price: price.trim(),
-      createdAt: new Date().toISOString(),
-      tastingNotes: { aroma, taste, finish, comment: tastingComment.trim() },
-    });
-    router.push("/");
+    try {
+      saveRecord({
+        id: crypto.randomUUID(),
+        name: name.trim(),
+        brand: brand.trim(),
+        type: type.trim(),
+        photoDataUrl,
+        rating,
+        price: price.trim(),
+        createdAt: new Date().toISOString(),
+        tastingNotes: { aroma, taste, finish, comment: tastingComment.trim() },
+      });
+      router.push("/");
+    } catch (err) {
+      console.error(err);
+      alert("저장에 실패했어요. 저장 공간이 부족할 수 있어요.");
+      setSaving(false);
+    }
   };
 
   // ── Step: upload ──

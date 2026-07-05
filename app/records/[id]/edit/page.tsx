@@ -71,16 +71,22 @@ export default function EditPage({ params }: { params: Promise<{ id: string }> }
     if (!name.trim() || saving) return;
     setSaving(true);
     trackEvent("기록 수정 저장 클릭", { recordId: id });
-    saveRecord({
-      ...record,
-      name: name.trim(),
-      brand: brand.trim(),
-      type: type.trim(),
-      rating,
-      price: price.trim(),
-      tastingNotes: { aroma, taste, finish, comment: tastingComment.trim() },
-    });
-    router.push(`/records/${id}`);
+    try {
+      saveRecord({
+        ...record,
+        name: name.trim(),
+        brand: brand.trim(),
+        type: type.trim(),
+        rating,
+        price: price.trim(),
+        tastingNotes: { aroma, taste, finish, comment: tastingComment.trim() },
+      });
+      router.push(`/records/${id}`);
+    } catch (err) {
+      console.error(err);
+      alert("저장에 실패했어요. 저장 공간이 부족할 수 있어요.");
+      setSaving(false);
+    }
   };
 
   return (
