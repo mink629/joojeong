@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getRecords } from "@/lib/storage";
+import { trackEvent } from "@/lib/analytics";
 import type { DrinkRecord } from "@/lib/types";
 
 function StarDisplay({ rating }: { rating: number }) {
@@ -36,6 +37,7 @@ export default function HomePage() {
         <h1 className="text-xl font-bold tracking-tight">내 술장</h1>
         <Link
           href="/new"
+          onClick={() => trackEvent("새 기록 추가 클릭")}
           className="w-9 h-9 bg-gray-900 text-white rounded-full flex items-center justify-center text-lg leading-none hover:bg-gray-700 transition-colors"
           aria-label="새 기록 추가"
         >

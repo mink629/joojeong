@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getRecord, deleteRecord } from "@/lib/storage";
+import { trackEvent } from "@/lib/analytics";
 import type { DrinkRecord } from "@/lib/types";
 import { StarDisplay } from "@/components/star";
 
@@ -37,6 +38,7 @@ export default function RecordDetailPage({ params }: PageProps<"/records/[id]">)
 
   const handleDelete = () => {
     if (!confirm("이 기록을 삭제할까요?")) return;
+    trackEvent("기록 삭제", { recordId: record.id });
     deleteRecord(record.id);
     router.push("/");
   };
@@ -55,6 +57,7 @@ export default function RecordDetailPage({ params }: PageProps<"/records/[id]">)
         <div className="flex items-center gap-3">
           <Link
             href={`/records/${record.id}/edit`}
+            onClick={() => trackEvent("기록 수정 클릭", { recordId: record.id })}
             className="text-sm text-gray-600 hover:text-gray-900 px-2 py-1 border border-gray-200 rounded-lg transition-colors"
           >
             수정

@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getRecord, saveRecord } from "@/lib/storage";
+import { trackEvent } from "@/lib/analytics";
 import { TASTING_TAGS } from "@/lib/tasting";
 import type { DrinkRecord } from "@/lib/types";
 import { StarInput } from "@/components/star";
@@ -69,6 +70,7 @@ export default function EditPage({ params }: { params: Promise<{ id: string }> }
   const handleSave = () => {
     if (!name.trim() || saving) return;
     setSaving(true);
+    trackEvent("기록 수정 저장 클릭", { recordId: id });
     saveRecord({
       ...record,
       name: name.trim(),

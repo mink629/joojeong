@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { recognizeLabel } from "@/lib/dummy-ai";
 import { saveRecord } from "@/lib/storage";
+import { trackEvent } from "@/lib/analytics";
 import { TASTING_TAGS } from "@/lib/tasting";
 import type { AIResult } from "@/lib/types";
 import { StarInput } from "@/components/star";
@@ -93,6 +94,7 @@ export default function NewPage() {
 
   const handleNukkiNext = async () => {
     if (!currentFile) return;
+    trackEvent("라벨 인식 다음 클릭");
     setStep("recognize");
     setIsRecognizing(true);
     try {
@@ -109,6 +111,7 @@ export default function NewPage() {
   };
 
   const handleNextFromRecognize = () => {
+    trackEvent("인식 결과 다음 클릭");
     if (aiResult) {
       setName(aiResult.product_name);
       setBrand(aiResult.brand);
@@ -120,6 +123,7 @@ export default function NewPage() {
   const handleSave = () => {
     if (!name.trim() || saving) return;
     setSaving(true);
+    trackEvent("기록 저장 클릭", { rating, hasPhoto: !!photoDataUrl });
     saveRecord({
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -154,7 +158,10 @@ export default function NewPage() {
             className="hidden"
           />
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              trackEvent("사진 촬영/업로드 클릭");
+              fileInputRef.current?.click();
+            }}
             className={`${BTN_PRIMARY} max-w-xs`}
           >
             📷 사진 촬영 / 업로드
