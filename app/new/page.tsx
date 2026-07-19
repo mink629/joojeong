@@ -5,7 +5,7 @@ import { useState } from "react";
 import { PhotoPicker } from "@/components/PhotoPicker";
 import { RecordForm } from "@/components/RecordForm";
 import { TopBar } from "@/components/TopBar";
-import { recognizeLabel } from "@/lib/recognize";
+import { recognizeLabel } from "@/lib/dummy-ai";
 import { createRecord } from "@/lib/storage";
 import { ALL_TYPES } from "@/lib/senseTags";
 import type { DrinkType, RecognitionResult } from "@/lib/types";
@@ -28,7 +28,7 @@ export default function NewRecordPage() {
     setPhotoUrl(url);
     setStep("recognizing");
 
-    const result = await recognizeLabel(file);
+    const result = await recognizeLabel();
     if (result) {
       setBrand(result.brand);
       setProductName(result.productName);
