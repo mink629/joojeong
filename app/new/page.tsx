@@ -5,9 +5,9 @@ import { useState } from "react";
 import { PhotoPicker } from "@/components/PhotoPicker";
 import { RecordForm } from "@/components/RecordForm";
 import { TopBar } from "@/components/TopBar";
-import { recognizeLabel } from "@/lib/dummy-ai";
+import { recognizeLabel } from "@/lib/recognize";
 import { createRecord } from "@/lib/storage";
-import { SUPPORTED_TYPES } from "@/lib/senseTags";
+import { ALL_TYPES } from "@/lib/senseTags";
 import type { DrinkType, RecognitionResult } from "@/lib/types";
 
 type Step = "photo" | "recognizing" | "confirm" | "form";
@@ -16,18 +16,31 @@ export default function NewRecordPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("photo");
   const [photoUrl, setPhotoUrl] = useState("");
-  const [recognition, setRecognition] = useState<RecognitionResult | null>(
-    null
-  );
-  const [confirmedType, setConfirmedType] = useState<DrinkType>("위스키");
+  const [confidence, setConfidence] =
+    useState<RecognitionResult["confidence"]>("보통");
+  const [recognitionFailed, setRecognitionFailed] = useState(false);
+  const [brand, setBrand] = useState("");
+  const [productName, setProductName] = useState("");
+  const [confirmedType, setConfirmedType] = useState<DrinkType | null>(null);
 
   async function handlePick(file: File) {
     const url = await readAsDataUrl(file);
     setPhotoUrl(url);
     setStep("recognizing");
+
     const result = await recognizeLabel(file);
-    setRecognition(result);
-    setConfirmedType(result.type);
+    if (result) {
+      setBrand(result.brand);
+      setProductName(result.productName);
+      setConfirmedType(result.type);
+      setConfidence(result.confidence);
+      setRecognitionFailed(false);
+    } else {
+      setBrand("");
+      setProductName("");
+      setConfirmedType(null);
+      setRecognitionFailed(true);
+    }
     setStep("confirm");
   }
 
@@ -64,7 +77,10 @@ export default function NewRecordPage() {
     );
   }
 
-  if (step === "confirm" && recognition) {
+  if (step === "confirm") {
+    const canProceed =
+      confirmedType !== null && (brand.trim() !== "" || productName.trim() !== "");
+
     return (
       <div className="flex flex-1 flex-col">
         <TopBar title="기록 만들기" onBack={() => setStep("photo")} />
@@ -78,57 +94,59 @@ export default function NewRecordPage() {
             />
           )}
 
-          <div>
-            <div className="mb-2 font-mono text-[10px] uppercase tracking-wide text-ink-muted">
-              AI 인식 결과 (더미)
+          {recognitionFailed ? (
+            <p className="rounded-lg border border-dashed border-border p-3 text-[11px] leading-relaxed text-ink-muted">
+              자동 인식에 실패했어요. 이름과 주종을 직접 입력해주세요.
+            </p>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="font-mono text-[10px] uppercase tracking-wide text-ink-muted">
+                AI 인식 결과
+              </div>
+              <span className="rounded-full border border-border bg-hatch px-2 py-0.5 text-[10.5px] text-ink-muted">
+                확신도 {confidence}
+              </span>
             </div>
-            <div className="flex flex-col divide-y divide-dashed divide-border rounded-lg border border-border px-3">
-              <Row k="브랜드" v={recognition.brand} />
-              <Row k="제품명" v={recognition.productName} />
-              <Row k="확신도" v={recognition.confidence} pill />
-            </div>
-          </div>
+          )}
+
+          <LabeledInput label="브랜드" value={brand} onChange={setBrand} placeholder="예: 글렌피딕" />
+          <LabeledInput
+            label="제품명"
+            value={productName}
+            onChange={setProductName}
+            placeholder="예: 12년"
+          />
 
           <div>
             <div className="mb-2 font-mono text-[10px] uppercase tracking-wide text-ink-muted">
               주종 확인 / 수정
             </div>
             <div className="flex gap-1.5">
-              {(["위스키", "와인", "전통주"] as DrinkType[]).map((type) => {
-                const locked = !SUPPORTED_TYPES.includes(type);
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    disabled={locked}
-                    onClick={() => setConfirmedType(type)}
-                    className={`flex-1 rounded-lg border py-2 text-[12px] ${
-                      locked
-                        ? "cursor-not-allowed border-border text-ink-muted/50"
-                        : confirmedType === type
-                          ? "border-accent font-bold text-accent"
-                          : "border-border text-ink-muted"
-                    }`}
-                  >
-                    {type}
-                    {locked && (
-                      <span className="ml-1 font-mono text-[9px]">M2</span>
-                    )}
-                  </button>
-                );
-              })}
+              {ALL_TYPES.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setConfirmedType(type)}
+                  className={`flex-1 rounded-lg border py-2 text-[12px] ${
+                    confirmedType === type
+                      ? "border-accent font-bold text-accent"
+                      : "border-border text-ink-muted"
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
             </div>
+            {confirmedType === null && (
+              <p className="mt-1.5 text-[11px] text-danger">주종을 선택해주세요.</p>
+            )}
           </div>
-
-          <p className="rounded-lg border border-dashed border-border p-3 text-[11px] leading-relaxed text-ink-muted">
-            인식이 잘 안 됐다면 다음 화면에서 이름을 직접 고쳐 저장할 수
-            있어요.
-          </p>
 
           <button
             type="button"
+            disabled={!canProceed}
             onClick={() => setStep("form")}
-            className="mt-auto rounded-lg bg-accent py-3 text-[13.5px] font-bold text-accent-ink"
+            className="mt-auto rounded-lg bg-accent py-3 text-[13.5px] font-bold text-accent-ink disabled:opacity-40"
           >
             확인하고 기록 작성하기
           </button>
@@ -137,14 +155,14 @@ export default function NewRecordPage() {
     );
   }
 
-  if (step === "form" && recognition) {
+  if (step === "form" && confirmedType) {
     return (
       <div className="flex flex-1 flex-col">
         <TopBar title="기록 작성" onBack={() => setStep("confirm")} />
         <RecordForm
           initial={{
-            name: `${recognition.brand} ${recognition.productName}`,
-            brand: recognition.brand,
+            name: `${brand} ${productName}`.trim(),
+            brand,
             type: confirmedType,
             photoUrl,
             rating: 0,
@@ -169,18 +187,29 @@ export default function NewRecordPage() {
   return null;
 }
 
-function Row({ k, v, pill }: { k: string; v: string; pill?: boolean }) {
+function LabeledInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
   return (
-    <div className="flex items-center justify-between py-2 text-[12.5px]">
-      <span className="text-ink-muted">{k}</span>
-      {pill ? (
-        <span className="rounded-full border border-border bg-hatch px-2 py-0.5 text-[10.5px] text-ink-muted">
-          {v}
-        </span>
-      ) : (
-        <span className="font-semibold">{v}</span>
-      )}
-    </div>
+    <label className="flex flex-col gap-1.5">
+      <span className="font-mono text-[10px] uppercase tracking-wide text-ink-muted">
+        {label}
+      </span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="rounded-lg border border-border px-3 py-2.5 text-[13px] outline-none placeholder:text-ink-muted"
+      />
+    </label>
   );
 }
 

@@ -10,13 +10,11 @@ import {
   subscribeRecords,
 } from "@/lib/storage";
 import type { DrinkType } from "@/lib/types";
-import { SUPPORTED_TYPES } from "@/lib/senseTags";
+import { ALL_TYPES } from "@/lib/senseTags";
 
 const TABS: { label: string; value: "전체" | DrinkType }[] = [
   { label: "전체", value: "전체" },
-  { label: "위스키", value: "위스키" },
-  { label: "와인", value: "와인" },
-  { label: "전통주", value: "전통주" },
+  ...ALL_TYPES.map((type) => ({ label: type, value: type })),
 ];
 
 export default function HomePage() {
@@ -31,36 +29,35 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <TopBar title="내 술장" />
+      <TopBar
+        title="내 술장"
+        action={
+          <Link
+            href="/report"
+            className="flex h-8 w-8 flex-none items-center justify-center text-[11px] font-semibold text-accent"
+          >
+            리포트
+          </Link>
+        }
+      />
 
       <div className="relative flex flex-1 flex-col gap-4 p-4">
         <div className="flex gap-1.5">
           {TABS.map((t) => {
-            const locked =
-              t.value !== "전체" &&
-              !SUPPORTED_TYPES.includes(t.value as DrinkType);
             const active = tab === t.value;
             return (
               <button
                 key={t.value}
                 type="button"
-                disabled={locked}
                 onClick={() => setTab(t.value)}
                 aria-pressed={active}
-                className={`relative rounded-full px-3 py-1.5 text-[11.5px] ${
-                  locked
-                    ? "cursor-not-allowed border border-border pr-6 text-ink-muted/60"
-                    : active
-                      ? "bg-ink font-semibold text-bg"
-                      : "border border-border text-ink-muted"
+                className={`rounded-full px-3 py-1.5 text-[11.5px] ${
+                  active
+                    ? "bg-ink font-semibold text-bg"
+                    : "border border-border text-ink-muted"
                 }`}
               >
                 {t.label}
-                {locked && (
-                  <span className="absolute right-1 top-1/2 -translate-y-1/2 rounded bg-border px-1 font-mono text-[8px] text-ink-muted">
-                    M2
-                  </span>
-                )}
               </button>
             );
           })}

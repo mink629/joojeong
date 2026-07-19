@@ -1,10 +1,6 @@
 import type { DrinkType } from "./types";
 
-/**
- * PRD 8절 감각 태그 마스터 초안. M2~M3 사이 검증/확정 예정이라
- * 와인/전통주 세트도 데이터는 미리 담아두되, SUPPORTED_TYPES로
- * M1에서는 위스키만 선택 가능하도록 잠가둔다.
- */
+/** PRD 8절 감각 태그 마스터 초안 (M2~M3 사이 검증/확정 예정) */
 export const SENSE_TAGS: Record<DrinkType, string[]> = {
   위스키: [
     "🍯 달콤함(꿀/카라멜/바닐라)",
@@ -35,10 +31,4 @@ export const SENSE_TAGS: Record<DrinkType, string[]> = {
   ],
 };
 
-export const SUPPORTED_TYPES: DrinkType[] = ["위스키"];
-
 export const ALL_TYPES: DrinkType[] = ["위스키", "와인", "전통주"];
-
-export function isSupportedType(type: DrinkType): boolean {
-  return SUPPORTED_TYPES.includes(type);
-}

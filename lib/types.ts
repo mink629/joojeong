@@ -19,6 +19,7 @@ export interface TastingRecord {
 export interface RecognitionResult {
   brand: string;
   productName: string;
-  type: DrinkType;
+  /** 애매하면 null — 사용자가 직접 선택해야 함 (PRD 6절) */
+  type: DrinkType | null;
   confidence: "낮음" | "보통" | "높음";
 }
