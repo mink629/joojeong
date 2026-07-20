@@ -29,7 +29,7 @@ export async function segmentLabel(
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3-flash-preview",
       contents: [
         {
           role: "user",
@@ -90,7 +90,7 @@ export async function structureLabelText(
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3-flash-preview",
       contents: [
         { role: "user", parts: [{ text: STRUCTURE_PROMPT_PREFIX + ocrText }] },
       ],

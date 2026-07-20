@@ -30,12 +30,20 @@ export async function cutoutLabel(
     .removeAlpha()
     .toBuffer();
 
-  const maskResized = await sharp(segment.maskPng)
-    .resize(boxWidth, boxHeight)
-    .greyscale()
-    .toBuffer();
+  // Gemini의 mask base64는 종종 픽셀 데이터가 손상된 채로 온다(헤더/IEND는
+  // 멀쩡해도 중간 압축 스트림이 깨짐). 마스크 합성이 실패해도 라벨 영역만
+  // 잘라낸 bbox crop은 살려서, 원본 사진 전체로 폴백하는 것보다 낫게 한다.
+  try {
+    const maskResized = await sharp(segment.maskPng)
+      .resize(boxWidth, boxHeight)
+      .greyscale()
+      .toBuffer();
 
-  const cutout = await sharp(crop).joinChannel(maskResized).png().toBuffer();
+    const cutout = await sharp(crop).joinChannel(maskResized).png().toBuffer();
 
-  return sharp(cutout).flatten({ background: "#ffffff" }).png().toBuffer();
+    return await sharp(cutout).flatten({ background: "#ffffff" }).png().toBuffer();
+  } catch (err) {
+    console.error("mask compositing failed, using bbox crop only", err);
+    return crop;
+  }
 }
