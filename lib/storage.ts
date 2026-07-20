@@ -2,6 +2,18 @@ import type { TastingRecord } from "./types";
 
 const STORAGE_KEY = "joojeong.records";
 
+/**
+ * crypto.randomUUID()는 secure context(HTTPS 또는 localhost)에서만 존재한다.
+ * 같은 와이파이의 폰에서 http://192.168.x.x로 접속하면 이 API 자체가 없어서
+ * TypeError가 난다. 로컬 저장 키일 뿐 보안이 필요 없으니 폴백으로 충분하다.
+ */
+function generateId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 const listeners = new Set<() => void>();
 let snapshotCache: TastingRecord[] = [];
 let snapshotCacheKey = "";
@@ -71,7 +83,7 @@ export function createRecord(
 ): TastingRecord {
   const record: TastingRecord = {
     ...input,
-    id: crypto.randomUUID(),
+    id: generateId(),
     createdAt: new Date().toISOString(),
   };
   writeAll([record, ...readAll()]);

@@ -1,5 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import type { DrinkType } from "./types";
+import { GoogleGenAI } from "@google/genai";
 
 function client(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -59,86 +58,6 @@ export async function segmentLabel(
     return { box: first.box_2d, maskPng: Buffer.from(base64Data, "base64") };
   } catch (err) {
     console.error("segmentLabel error", err);
-    return null;
-  }
-}
-
-/** 3단계: OCR로 뽑은 원문 텍스트를 브랜드/제품명/주종/확신도로 구조화. */
-export interface StructuredLabel {
-  brand: string;
-  productName: string;
-  type: DrinkType | null;
-  confidence: "낮음" | "보통" | "높음";
-}
-
-const STRUCTURE_PROMPT_PREFIX = `다음은 술 라벨에서 OCR로 추출한 텍스트다.
-여기서 브랜드명, 제품명, 주종(위스키/와인/전통주)을 추출해라.
-확신이 없으면 confidence를 "낮음"으로 낮추고, 브랜드/제품명을 추측해서 지어내지 말고 빈 문자열로 남겨라.
-주종 판별이 애매하면 type을 "unknown"으로 반환해라.
-
-OCR 텍스트:
-`;
-
-export async function structureLabelText(
-  ocrText: string
-): Promise<StructuredLabel | null> {
-  const ai = client();
-  if (!ai) return null;
-  if (!ocrText.trim()) {
-    return { brand: "", productName: "", type: null, confidence: "낮음" };
-  }
-
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: [
-        { role: "user", parts: [{ text: STRUCTURE_PROMPT_PREFIX + ocrText }] },
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            brand: { type: Type.STRING },
-            product_name: { type: Type.STRING },
-            type: {
-              type: Type.STRING,
-              enum: ["위스키", "와인", "전통주", "unknown"],
-            },
-            confidence: { type: Type.STRING, enum: ["낮음", "보통", "높음"] },
-          },
-          required: ["brand", "product_name", "type", "confidence"],
-        },
-      },
-    });
-
-    const raw = response.text?.trim();
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw) as {
-      brand?: string;
-      product_name?: string;
-      type?: string;
-      confidence?: string;
-    };
-
-    const type =
-      parsed.type === "위스키" || parsed.type === "와인" || parsed.type === "전통주"
-        ? parsed.type
-        : null;
-    const confidence =
-      parsed.confidence === "높음" || parsed.confidence === "낮음"
-        ? parsed.confidence
-        : "보통";
-
-    return {
-      brand: parsed.brand ?? "",
-      productName: parsed.product_name ?? "",
-      type,
-      confidence,
-    };
-  } catch (err) {
-    console.error("structureLabelText error", err);
     return null;
   }
 }
