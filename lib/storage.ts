@@ -56,8 +56,10 @@ export function getRecordsSnapshot(): TastingRecord[] {
   return snapshotCache;
 }
 
+const EMPTY_RECORDS: TastingRecord[] = [];
+
 export function getServerRecordsSnapshot(): TastingRecord[] {
-  return [];
+  return EMPTY_RECORDS;
 }
 
 export function getRecord(id: string): TastingRecord | undefined {

@@ -26,8 +26,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={`${notoSansKr.variable} h-full antialiased`}>
-      <body className="min-h-full bg-bg text-ink">
+    <html
+      lang="ko"
+      className={`${notoSansKr.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-full bg-bg text-ink" suppressHydrationWarning>
         <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-surface shadow-[0_0_0_1px_var(--border)] sm:my-4 sm:min-h-[calc(100dvh-2rem)] sm:rounded-3xl sm:overflow-hidden">
           {children}
         </div>
